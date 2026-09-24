@@ -23,13 +23,14 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
-          cache: gradle
 
-      - name: Make Gradle executable
-        run: chmod +x gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.7.1"
 
       - name: Build plugin
-        run: ./gradlew build --no-daemon
+        run: gradle build --no-daemon
 
       - name: Find plugin JAR
         id: jar
@@ -40,29 +41,29 @@ jobs:
             ! -name '*-javadoc.jar' | head -n 1)
 
           if [ -z "$JAR" ]; then
-            echo "No plugin JAR found!"
+            echo "No plugin JAR found in build/libs"
             exit 1
           fi
 
+          echo "Found plugin: $JAR"
           echo "jar=$JAR" >> "$GITHUB_OUTPUT"
-          echo "Found: $JAR"
 
-      - name: Determine release tag
-        id: release
+      - name: Determine release version
+        id: version
         shell: bash
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            TAG="$GITHUB_REF_NAME"
+            VERSION="$GITHUB_REF_NAME"
           else
-            TAG="build-${GITHUB_RUN_NUMBER}"
+            VERSION="build-${GITHUB_RUN_NUMBER}"
           fi
 
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release.outputs.tag }}
-          name: Netflared Server ${{ steps.release.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Netflared Server ${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: ${{ steps.jar.outputs.jar }}
