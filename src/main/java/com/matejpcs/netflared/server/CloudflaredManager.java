@@ -113,7 +113,9 @@ public final class CloudflaredManager {
                 .start();
 
         Process current = process;
-        Thread.ofVirtual().name("netflared-cloudflared-monitor").start(() -> monitor(current, token));
+        Thread monitorThread = new Thread(() -> monitor(current, token), "netflared-cloudflared-monitor");
+        monitorThread.setDaemon(true);
+        monitorThread.start();
     }
 
     private void monitor(Process current, String token) {

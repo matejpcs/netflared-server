@@ -2,9 +2,9 @@ name: Netflared
 version: "${version}"
 main: com.matejpcs.netflared.server.NetflaredServerPlugin
 description: Easy Cloudflare Tunnel management for Paper Minecraft servers
-author: matejpcs
+author: matejcs
 website: https://github.com/matejpcs/netflared-server
-api-version: '26.2'
+api-version: '${apiVersion}'
 
 commands:
   netflared:

@@ -1,75 +1,179 @@
-name: Build & Release
+name: Build & Release Paper compatibility bundles
 
 on:
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: Netflared plugin release version
+        required: true
+        default: "0.1.2"
   push:
     tags:
-      - "v*"
+      - "server-v*"
 
 permissions:
   contents: write
 
+env:
+  GRADLE_VERSION: "9.7.1"
+
 jobs:
-  build:
-    name: Build Netflared Server
+  build-1-20:
+    name: Paper 1.20.x / ${{ matrix.paper }}
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { paper: "1.20", java: "17", api: "1.20" }
+          - { paper: "1.20.1", java: "17", api: "1.20" }
+          - { paper: "1.20.2", java: "17", api: "1.20" }
+          - { paper: "1.20.3", java: "17", api: "1.20" }
+          - { paper: "1.20.4", java: "17", api: "1.20" }
+          - { paper: "1.20.5", java: "21", api: "1.20" }
+          - { paper: "1.20.6", java: "21", api: "1.20" }
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: paper/1.20.x
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+      - name: Build and test
+        run: |
+          gradle clean build --no-daemon \
+            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpaperVersion="${{ matrix.paper }}-R0.1-SNAPSHOT" \
+            -PjavaVersion="${{ matrix.java }}" \
+            -PapiVersion="${{ matrix.api }}" \
+            -PartifactVersion="${{ matrix.paper }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netflared-1.20-${{ matrix.paper }}
+          path: build/libs/netflared-server-${{ matrix.paper }}.jar
+          if-no-files-found: error
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v5
+  build-1-21:
+    name: Paper 1.21.x / ${{ matrix.paper }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        paper: ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: paper/1.21.x
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+      - name: Build and test
+        run: |
+          gradle clean build --no-daemon \
+            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpaperVersion="${{ matrix.paper }}-R0.1-SNAPSHOT" \
+            -PjavaVersion="21" \
+            -PapiVersion="1.21" \
+            -PartifactVersion="${{ matrix.paper }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netflared-1.21-${{ matrix.paper }}
+          path: build/libs/netflared-server-${{ matrix.paper }}.jar
+          if-no-files-found: error
+
+  build-26:
+    name: Paper 26.x / ${{ matrix.paper }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { paper: "26.1.1", api: "26.1" }
+          - { paper: "26.1.2", api: "26.1" }
+          - { paper: "26.2", api: "26.2" }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: paper/26.x
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "9.7.1"
-
-      - name: Determine release tag
-        id: release
-        shell: bash
+          gradle-version: ${{ env.GRADLE_VERSION }}
+      - name: Build and test
         run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            TAG="$GITHUB_REF_NAME"
-          else
-            TAG="build-$GITHUB_RUN_NUMBER"
-          fi
-
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Build and test plugin
-        run: gradle clean build --no-daemon -PpluginVersion="${{ steps.release.outputs.version }}"
-
-      - name: Find plugin JAR
-        id: jar
-        shell: bash
-        run: |
-          mapfile -t JARS < <(
-            find build/libs -maxdepth 1 -type f -name '*.jar' \
-              ! -name '*-sources.jar' \
-              ! -name '*-javadoc.jar' \
-              -print
-          )
-
-          if [ "${#JARS[@]}" -ne 1 ]; then
-            echo "Expected exactly one plugin JAR, found ${#JARS[@]}:"
-            printf '  %s\n' "${JARS[@]}"
-            exit 1
-          fi
-
-          echo "Found plugin: ${JARS[0]}"
-          echo "jar=${JARS[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+          gradle clean build --no-daemon \
+            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpaperVersion="${{ matrix.paper }}.build.+" \
+            -PjavaVersion="25" \
+            -PapiVersion="${{ matrix.api }}" \
+            -PartifactVersion="${{ matrix.paper }}"
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.release.outputs.tag }}
-          name: Netflared Server ${{ steps.release.outputs.tag }}
+          name: netflared-26-${{ matrix.paper }}
+          path: build/libs/netflared-server-${{ matrix.paper }}.jar
+          if-no-files-found: error
+
+  release-1-20:
+    name: Release Paper 1.20.x
+    needs: build-1-20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: netflared-1.20-*
+          path: release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "v${{ inputs.release_version || '0.1.2' }}-1.20.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 1.20.x"
+          target_commitish: paper/1.20.x
           generate_release_notes: true
-          files: ${{ steps.jar.outputs.jar }}
+          files: release/*.jar
+
+  release-1-21:
+    name: Release Paper 1.21.x
+    needs: build-1-21
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: netflared-1.21-*
+          path: release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "v${{ inputs.release_version || '0.1.2' }}-1.21.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 1.21.x"
+          target_commitish: paper/1.21.x
+          generate_release_notes: true
+          files: release/*.jar
+
+  release-26:
+    name: Release Paper 26.x
+    needs: build-26
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: netflared-26-*
+          path: release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: "v${{ inputs.release_version || '0.1.2' }}-26.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 26.x"
+          target_commitish: paper/26.x
+          generate_release_notes: true
+          files: release/*.jar
