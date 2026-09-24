@@ -211,6 +211,11 @@ public final class NetflaredServerPlugin extends JavaPlugin {
             config.setTunnelName("");
             config.setHostname("");
             config.save();
+            try {
+                cloudflared.clearTokenFile();
+            } catch (IOException e) {
+                getLogger().warning("Could not remove tunnel token file: " + e.getMessage());
+            }
             sender.sendMessage(ChatColor.GREEN + "Local configuration reset. Cloudflare resources were left untouched.");
         } catch (IOException e) {
             sender.sendMessage(ChatColor.RED + "Could not save reset configuration: " + e.getMessage());
