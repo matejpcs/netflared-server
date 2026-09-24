@@ -23,12 +23,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class CloudflaredManager {
     private static final String RELEASES = "https://api.github.com/repos/cloudflare/cloudflared/releases/latest";
     private final Path binary;
+    private final Path tokenFile;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
     private Process process;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
 
     public CloudflaredManager(Path dataFolder) {
         this.binary = dataFolder.resolve("bin").resolve(Platform.executableName());
+        this.tokenFile = dataFolder.resolve("tunnel.token");
     }
 
     public synchronized boolean isRunning() {
@@ -94,7 +96,16 @@ public final class CloudflaredManager {
     public synchronized void start(String token) throws IOException {
         if (isRunning()) return;
         stopping.set(false);
-        process = new ProcessBuilder(binary.toString(), "tunnel", "run", "--token", token)
+        Files.createDirectories(tokenFile.getParent());
+        Files.writeString(tokenFile, token, java.nio.charset.StandardCharsets.UTF_8);
+        if (!Platform.id().startsWith("windows")) {
+            try {
+                Files.setPosixFilePermissions(tokenFile, Set.of(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE));
+            } catch (UnsupportedOperationException ignored) {}
+        }
+        process = new ProcessBuilder(binary.toString(), "tunnel", "run", "--token-file", tokenFile.toString())
                 .redirectErrorStream(true)
                 .start();
 
@@ -137,6 +148,10 @@ public final class CloudflaredManager {
     }
 
     public Path binary() { return binary; }
+
+    public void clearTokenFile() throws IOException {
+        Files.deleteIfExists(tokenFile);
+    }
 
     private static String assetName() {
         return switch (Platform.id()) {
