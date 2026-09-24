@@ -101,12 +101,12 @@ public final class NetflaredServerPlugin extends JavaPlugin {
 
         int port = Bukkit.getPort();
         String tunnelName = "netflared-" + Bukkit.getServer().getName().toLowerCase().replaceAll("[^a-z0-9-]", "-");
-        tunnelName = tunnelName.substring(0, Math.min(48, tunnelName.length()));
+        final String finalTunnelName = tunnelName.substring(0, Math.min(48, tunnelName.length()));
 
         sender.sendMessage(ChatColor.YELLOW + "Creating Cloudflare Tunnel for " + hostname + "...");
         CompletableFuture.runAsync(() -> {
             try {
-                CloudflareClient.Tunnel tunnel = client.createTunnel(zone.accountId(), tunnelName);
+                CloudflareClient.Tunnel tunnel = client.createTunnel(zone.accountId(), finalTunnelName);
                 String token = client.getTunnelToken(zone.accountId(), tunnel.id());
                 client.updateConfiguration(zone.accountId(), tunnel.id(), hostname, port);
                 client.upsertDns(zone.id(), hostname, tunnel.id() + ".cfargotunnel.com");
