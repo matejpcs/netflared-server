@@ -69,7 +69,7 @@ public final class CloudflareClient {
 
         JsonObject route = new JsonObject();
         route.addProperty("hostname", hostname);
-        route.addProperty("service", "tcp://127.0.0.1:" + port);
+        route.addProperty("service", "tcp://localhost:" + port);
         ingress.add(route);
 
         JsonObject fallback = new JsonObject();
