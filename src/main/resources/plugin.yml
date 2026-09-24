@@ -1,0 +1,18 @@
+name: Netflared
+version: "${version}"
+main: com.matejpcs.netflared.server.NetflaredServerPlugin
+description: Easy Cloudflare Tunnel management for Paper Minecraft servers
+author: matejpcs
+website: https://github.com/matejpcs/netflared-server
+api-version: '26.2'
+
+commands:
+  netflared:
+    description: Manage the Netflared Cloudflare Tunnel
+    usage: /netflared <status|setup|connect|disconnect|info|reset|reload>
+    permission: netflared.admin
+
+permissions:
+  netflared.admin:
+    description: Allows management of the Netflared tunnel
+    default: op
