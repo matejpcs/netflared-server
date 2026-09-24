@@ -25,13 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { paper: "1.20", java: "17", api: "1.20" }
-          - { paper: "1.20.1", java: "17", api: "1.20" }
-          - { paper: "1.20.2", java: "17", api: "1.20" }
-          - { paper: "1.20.3", java: "17", api: "1.20" }
-          - { paper: "1.20.4", java: "17", api: "1.20" }
-          - { paper: "1.20.5", java: "21", api: "1.20" }
-          - { paper: "1.20.6", java: "21", api: "1.20" }
+          - { paper: "1.20", apiPaper: "1.20-R0.1-SNAPSHOT", java: "17", api: "1.20" }
+          - { paper: "1.20.1", apiPaper: "1.20.1-R0.1-SNAPSHOT", java: "17", api: "1.20" }
+          - { paper: "1.20.2", apiPaper: "1.20.2-R0.1-SNAPSHOT", java: "17", api: "1.20" }
+          - { paper: "1.20.3", apiPaper: "1.20.3-R0.1-SNAPSHOT", java: "17", api: "1.20" }
+          - { paper: "1.20.4", apiPaper: "1.20.4-R0.1-SNAPSHOT", java: "17", api: "1.20" }
+          - { paper: "1.20.5", apiPaper: "1.20.6-R0.1-SNAPSHOT", java: "21", api: "1.20" }
+          - { paper: "1.20.6", apiPaper: "1.20.6-R0.1-SNAPSHOT", java: "21", api: "1.20" }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,7 +47,7 @@ jobs:
         run: |
           gradle clean build --no-daemon \
             -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
-            -PpaperVersion="${{ matrix.paper }}-R0.1-SNAPSHOT" \
+            -PpaperVersion="${{ matrix.apiPaper }}" \
             -PjavaVersion="${{ matrix.java }}" \
             -PapiVersion="${{ matrix.api }}" \
             -PartifactVersion="${{ matrix.paper }}"
@@ -63,7 +63,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        paper: ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+        include:
+          - { paper: "1.21", apiPaper: "1.21-R0.1-SNAPSHOT" }
+          - { paper: "1.21.1", apiPaper: "1.21.1-R0.1-SNAPSHOT" }
+          - { paper: "1.21.2", apiPaper: "1.21.1-R0.1-SNAPSHOT" }
+          - { paper: "1.21.3", apiPaper: "1.21.3-R0.1-SNAPSHOT" }
+          - { paper: "1.21.4", apiPaper: "1.21.4-R0.1-SNAPSHOT" }
+          - { paper: "1.21.5", apiPaper: "1.21.5-R0.1-SNAPSHOT" }
+          - { paper: "1.21.6", apiPaper: "1.21.6-R0.1-SNAPSHOT" }
+          - { paper: "1.21.7", apiPaper: "1.21.7-R0.1-SNAPSHOT" }
+          - { paper: "1.21.8", apiPaper: "1.21.8-R0.1-SNAPSHOT" }
+          - { paper: "1.21.9", apiPaper: "1.21.9-R0.1-SNAPSHOT" }
+          - { paper: "1.21.10", apiPaper: "1.21.10-R0.1-SNAPSHOT" }
+          - { paper: "1.21.11", apiPaper: "1.21.11-R0.1-SNAPSHOT" }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -79,7 +91,7 @@ jobs:
         run: |
           gradle clean build --no-daemon \
             -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
-            -PpaperVersion="${{ matrix.paper }}-R0.1-SNAPSHOT" \
+            -PpaperVersion="${{ matrix.apiPaper }}" \
             -PjavaVersion="21" \
             -PapiVersion="1.21" \
             -PartifactVersion="${{ matrix.paper }}"
@@ -124,9 +136,17 @@ jobs:
           path: build/libs/netflared-server-${{ matrix.paper }}.jar
           if-no-files-found: error
 
+  all-builds:
+    name: All Paper compatibility builds passed
+    needs: [build-1-20, build-1-21, build-26]
+    if: ${{ always() && needs.build-1-20.result == 'success' && needs.build-1-21.result == 'success' && needs.build-26.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All 22 Paper compatibility builds passed. Releases may be published."
+
   release-1-20:
     name: Release Paper 1.20.x
-    needs: build-1-20
+    needs: all-builds
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -144,7 +164,7 @@ jobs:
 
   release-1-21:
     name: Release Paper 1.21.x
-    needs: build-1-21
+    needs: all-builds
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -162,7 +182,7 @@ jobs:
 
   release-26:
     name: Release Paper 26.x
-    needs: build-26
+    needs: all-builds
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
