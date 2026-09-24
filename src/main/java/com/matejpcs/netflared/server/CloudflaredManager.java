@@ -24,7 +24,10 @@ public final class CloudflaredManager {
     private static final String RELEASES = "https://api.github.com/repos/cloudflare/cloudflared/releases/latest";
     private final Path binary;
     private final Path tokenFile;
-    private final HttpClient http = HttpClient.newBuilder()\n            .followRedirects(HttpClient.Redirect.NORMAL)\n            .connectTimeout(Duration.ofSeconds(20))\n            .build();
+    private final HttpClient http = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(20))
+            .build();
     private Process process;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
 
