@@ -1,0 +1,68 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Netflared Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Build plugin
+        run: ./gradlew build --no-daemon
+
+      - name: Find plugin JAR
+        id: jar
+        shell: bash
+        run: |
+          JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' \
+            ! -name '*-sources.jar' \
+            ! -name '*-javadoc.jar' | head -n 1)
+
+          if [ -z "$JAR" ]; then
+            echo "No plugin JAR found!"
+            exit 1
+          fi
+
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          echo "Found: $JAR"
+
+      - name: Determine release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="build-${GITHUB_RUN_NUMBER}"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Netflared Server ${{ steps.release.outputs.tag }}
+          generate_release_notes: true
+          files: ${{ steps.jar.outputs.jar }}
