@@ -6,7 +6,7 @@ on:
       release_version:
         description: Netflared plugin release version
         required: true
-        default: "0.1.2"
+        default: "0.1.4"
   push:
     tags:
       - "server-v*"
@@ -46,7 +46,7 @@ jobs:
       - name: Build and test
         run: |
           gradle clean build --no-daemon \
-            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpluginVersion="${{ inputs.release_version || '0.1.4' }}" \
             -PpaperVersion="${{ matrix.apiPaper }}" \
             -PjavaVersion="${{ matrix.java }}" \
             -PapiVersion="${{ matrix.api }}" \
@@ -90,7 +90,7 @@ jobs:
       - name: Build and test
         run: |
           gradle clean build --no-daemon \
-            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpluginVersion="${{ inputs.release_version || '0.1.4' }}" \
             -PpaperVersion="${{ matrix.apiPaper }}" \
             -PjavaVersion="21" \
             -PapiVersion="1.21" \
@@ -125,7 +125,7 @@ jobs:
       - name: Build and test
         run: |
           gradle clean build --no-daemon \
-            -PpluginVersion="${{ inputs.release_version || '0.1.2' }}" \
+            -PpluginVersion="${{ inputs.release_version || '0.1.4' }}" \
             -PpaperVersion="${{ matrix.paper }}.build.+" \
             -PjavaVersion="25" \
             -PapiVersion="${{ matrix.api }}" \
@@ -156,8 +156,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v3
         with:
-          tag_name: "v${{ inputs.release_version || '0.1.2' }}-1.20.x"
-          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 1.20.x"
+          tag_name: "v${{ inputs.release_version || '0.1.4' }}-1.20.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.4' }} — Paper 1.20.x"
           target_commitish: paper/1.20.x
           generate_release_notes: true
           files: release/*.jar
@@ -174,8 +174,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v3
         with:
-          tag_name: "v${{ inputs.release_version || '0.1.2' }}-1.21.x"
-          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 1.21.x"
+          tag_name: "v${{ inputs.release_version || '0.1.4' }}-1.21.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.4' }} — Paper 1.21.x"
           target_commitish: paper/1.21.x
           generate_release_notes: true
           files: release/*.jar
@@ -192,8 +192,8 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v3
         with:
-          tag_name: "v${{ inputs.release_version || '0.1.2' }}-26.x"
-          name: "Netflared Server ${{ inputs.release_version || '0.1.2' }} — Paper 26.x"
+          tag_name: "v${{ inputs.release_version || '0.1.4' }}-26.x"
+          name: "Netflared Server ${{ inputs.release_version || '0.1.4' }} — Paper 26.x"
           target_commitish: paper/26.x
           generate_release_notes: true
           files: release/*.jar
