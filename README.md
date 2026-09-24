@@ -45,11 +45,11 @@ The server side looks like this:
 ~~~text
 Minecraft server
       |
-      | 127.0.0.1:25565
+      | localhost:25565
       v
 Netflared Paper plugin
       |
-      | cloudflared tunnel run --token ...
+      | cloudflared tunnel run --token-file <token-file>
       v
 Cloudflare Tunnel
       |
@@ -285,7 +285,7 @@ The Cloudflare ingress created by Netflared is equivalent to:
 
 ~~~text
 hostname: play.example.com
-service: tcp://127.0.0.1:25565
+service: tcp://localhost:25565
 ~~~
 
 A final catch-all rule returns HTTP 404 for unmatched traffic, as required by Cloudflare ingress configuration.
@@ -477,7 +477,7 @@ At startup:
 4. Start:
 
 ~~~text
-cloudflared tunnel run --token <tunnel-token>
+cloudflared tunnel run --token-file <token-file>
 ~~~
 
 5. Monitor the process.
@@ -635,7 +635,7 @@ Check:
 The tunnel service should be:
 
 ~~~text
-tcp://127.0.0.1:<minecraft-port>
+tcp://localhost:<minecraft-port>
 ~~~
 
 ## Minecraft port changed
@@ -771,7 +771,7 @@ Cloudflare Account
 └── Tunnel
     ├── connector
     └── public hostname
-        └── tcp://127.0.0.1:25565
+        └── tcp://localhost:25565
 ~~~
 
 The server only needs the connector token at runtime.
